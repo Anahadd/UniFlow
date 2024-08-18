@@ -1,0 +1,7 @@
+*.json
+/audio
+/resumes
+/uploads
+.env
+
+*.js
