@@ -1,149 +1,217 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import styled from 'styled-components';
-import Layout from './Layout';
-import { getAuth } from 'firebase/auth';
-import background from "../icon/bg_app.svg";
+  import React, { useState, useEffect } from 'react';
+  import styled, { createGlobalStyle } from 'styled-components';
+  import axios from 'axios';
+  import Layout from './Layout'; 
+  import { getAuth } from 'firebase/auth';
+  import background from "../icon/bg_app.svg";
 
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-  background-color: var(--bg);
-  border-radius: 8px;
-  min-height: 100vh;
-  width: 100%;
-  background-image: url(${background});
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  overflow-y: auto;
-`;
+  const GlobalStyle = createGlobalStyle`
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-const Title = styled.h1`
-  color: #ffffff;
-  margin-bottom: 30px;
-  font-size: 36px;
-  font-weight: 700;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-`;
+    body {
+      font-family: 'Roboto', sans-serif;
+    }
+  `;
 
-const ScholarshipCard = styled.div`
-  background-color: rgba(50, 50, 50, 0.7);
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  width: 100%;
-  max-width: 800px;
-  color: #ffffff;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-`;
+  const Container = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: var(--bg);
+    border-radius: 8px;
+    height: 100vh;
+    width: 100%;
+    background-image: url(${background});
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center; /* Center the background image */
+    overflow-y: auto;
+  `;
 
-const ScholarshipTitle = styled.h2`
-  font-size: 1.5rem;
-  margin-bottom: 10px;
-`;
+  const FormField = styled.div`
+    margin-bottom: 40px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
-const ScholarshipInfo = styled.p`
-  margin-bottom: 5px;
-`;
+    label {
+      color: #ffffff;
+      font-weight: 500;
+      font-size: 1.3rem;
+      margin-bottom: 8px;
+    }
 
-const Button = styled.button`
-  padding: 10px 20px;
-  margin-top: 10px;
-  background-color: rgba(59, 76, 226, 0.8);
-  color: #ffffff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  transition: transform 0.3s ease-in-out;
+    select {
+      width: calc(100% - 20px);
+      max-width: 700px;
+      padding: 0.75rem;
+      border-radius: 0.25rem;
+      border: 1px solid #c0c4c9;
+      font-size: 1rem;
+      color: #ffffff;
+      background-color: rgba(50, 50, 50, 0.7);
+      transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
 
-  &:hover {
-    transform: scale(1.05);
-  }
-`;
+    select:focus {
+      border-color: rgba(255, 255, 255, 0.7);
+      outline: none;
+    }
+  `;
 
-const ScholarshipMatching = () => {
-  const [email, setEmail] = useState('');
-  const [scholarships, setScholarships] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const Button = styled.button`
+    padding: 10px 20px;
+    background-color: rgba(59, 76, 226, 0.8);
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    transition: transform 0.3s ease-in-out;
 
-  useEffect(() => {
-    const auth = getAuth();
-    const user = auth.currentUser;
+    &:hover {
+      transform: scale(1.05);
+    }
+  `;
+
+  const FeedbackContainer = styled.div`
+    margin-top: 30px;
+    padding: 20px;
+    background-color: rgba(50, 50, 50, 0.7);
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 1.2rem;
+    line-height: 1.6;
+    max-width: 700px;
+  `;
+
+  const Title = styled.h1`
+    color: #ffffff;
+    margin-bottom: 30px;
+    font-size: 36px;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  `;
+
+  const EssayCoaching = () => {
+    const [email, setEmail] = useState('');
+    const [universities, setUniversities] = useState([]);
+    const [selectedUniversity, setSelectedUniversity] = useState('');
+    const [questions, setQuestions] = useState([]);
+    const [selectedQuestion, setSelectedQuestion] = useState('');
+    const [feedback, setFeedback] = useState('');
+    useEffect(() => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (user) {
+        setEmail(user.email);
+        fetchProfile(user.email);
+      } else {
+        console.error('No user is signed in.');
+      }
+    }, []);
+
+    const fetchProfile = async (email) => {
+      try {
+        const response = await axios.get('http://localhost:5000/get_profile', {
+          params: { email }
+        });
+
+        setUniversities(response.data.universities || []);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      }
+    };
+
+    const fetchQuestions = async () => {
+      if (!selectedUniversity) return;
+
+      try {
+        const response = await axios.get('http://localhost:5000/get_application', {
+          params: { email, university: selectedUniversity }
+        });
+
+        const fetchedQuestions = response.data.responses ? Object.keys(response.data.responses) : [];
+        setQuestions(fetchedQuestions);
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+      }
+    };
+
+    const analyzeEssay = async () => {
+      try {
+        const response = await axios.post('http://localhost:5000/analyze_essay', {
+          email,
+          university: selectedUniversity,
+          question: selectedQuestion,
+        });
     
-    if (user) {
-      setEmail(user.email);
-      fetchMatchingScholarships(user.email);
-    } else {
-      console.error('No user is signed in.');
-      setLoading(false);
-    }
-  }, []);
+        setFeedback(response.data.feedback);
+      } catch (error) {
+        console.error('Error analyzing essay:', error);
+      }
+    };
+    
 
-  const fetchMatchingScholarships = async (userEmail) => {
-    try {
-      const response = await axios.get('http://localhost:5000/get_matching_scholarships', {
-        params: { email: userEmail }
-      });
-      setScholarships(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching matching scholarships:', error);
-      setLoading(false);
-    }
+    return (
+      <Layout>
+        <GlobalStyle />
+        <Container>
+          <Title>AI Essay Coaching</Title>
+          <FormField>
+            <label htmlFor="university">Select University</label>
+            <select
+              id="university"
+              value={selectedUniversity}
+              onChange={(e) => {
+                setSelectedUniversity(e.target.value);
+                fetchQuestions();
+              }}
+              required
+            >
+              <option value="" disabled>Select a university</option>
+              {universities.map((university, index) => (
+                <option key={index} value={university}>{university}</option>
+              ))}
+            </select>
+          </FormField>
+
+          {questions.length > 0 && (
+            <FormField>
+              <label htmlFor="question">Select Question</label>
+              <select
+                id="question"
+                value={selectedQuestion}
+                onChange={(e) => setSelectedQuestion(e.target.value)}
+                required
+              >
+                <option value="" disabled>Select a question</option>
+                {questions.map((question, index) => (
+                  <option key={index} value={question}>{question}</option>
+                ))}
+              </select>
+            </FormField>
+          )}
+
+          {selectedQuestion && (
+            <Button onClick={analyzeEssay}>Analyze Essay</Button>
+          )}
+
+          {feedback && (
+            <FeedbackContainer>
+              <h3>AI Feedback:</h3>
+              <p>{feedback}</p>
+            </FeedbackContainer>
+          )}
+        </Container>
+      </Layout>
+    );
   };
 
-  const updateScholarshipStatus = async (scholarshipId, status) => {
-    try {
-      await axios.post('http://localhost:5000/update_scholarship_status', {
-        email,
-        scholarshipId,
-        status
-      });
-      // Update local state to reflect the change
-      setScholarships(scholarships.map(s => 
-        s._id === scholarshipId ? {...s, status} : s
-      ));
-    } catch (error) {
-      console.error('Error updating scholarship status:', error);
-    }
-  };
-
-  if (loading) {
-    return <Container><Title>Loading scholarships...</Title></Container>;
-  }
-
-  return (
-    <Layout>
-      <Container>
-        <Title>Matching Scholarships</Title>
-        {scholarships.length === 0 ? (
-          <ScholarshipInfo>No matching scholarships found.</ScholarshipInfo>
-        ) : (
-          scholarships.map(scholarship => (
-            <ScholarshipCard key={scholarship._id}>
-              <ScholarshipTitle>{scholarship.title}</ScholarshipTitle>
-              <ScholarshipInfo>Amount: ${scholarship.amount}</ScholarshipInfo>
-              <ScholarshipInfo>Deadline: {scholarship.deadline}</ScholarshipInfo>
-              <ScholarshipInfo>{scholarship.description}</ScholarshipInfo>
-              <Button onClick={() => updateScholarshipStatus(scholarship._id, 'saved')}>
-                Save
-              </Button>
-              <Button onClick={() => updateScholarshipStatus(scholarship._id, 'applied')}>
-                Mark as Applied
-              </Button>
-            </ScholarshipCard>
-          ))
-        )}
-      </Container>
-    </Layout>
-  );
-};
-
-export default ScholarshipMatching;
+  export default EssayCoaching;

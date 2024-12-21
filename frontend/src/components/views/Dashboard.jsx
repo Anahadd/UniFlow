@@ -10,7 +10,7 @@ import ApplicationFeature from "./ApplicationFeature";
 import Layout from "./Layout";
 
 const Details = styled.div`
-  background-color: var(--bg);
+  background-color: var(--bg);  
   width: 600px;
   height: calc(100vh - 64px);
   overflow-y: scroll;

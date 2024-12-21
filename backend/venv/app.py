@@ -15,26 +15,20 @@ from interview_utils import analyze_with_vertex_ai, speak_feedback
 from bson.objectid import ObjectId
 from datetime import datetime
 
-# Load environment variables
 load_dotenv()
 
-# Setup logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS
+CORS(app)  
 
-# MongoDB setup
 client = MongoClient('mongodb://localhost:27017/')
 db = client['easify_apps']
 profiles_collection = db['user_profiles']
 
-# Google Cloud Storage setup
 GCS_BUCKET_NAME = os.getenv('BUCKET_NAME')
 storage_client = storage.Client()
 
-# Initialize Vertex AI with the given project ID and credentials
 project_id = os.getenv("PROJECT_ID")
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GCP")
 vertexai.init(project=project_id, location="us-central1")
@@ -74,7 +68,6 @@ def get_matching_scholarships():
         if not user_profile:
             return jsonify({'error': 'User profile not found'}), 404
 
-        # Simple matching algorithm based on study field and universities
         matching_scholarships = scholarships_collection.find({
             '$or': [
                 {'eligibility.study': user_profile['study']},
@@ -140,7 +133,7 @@ def update_scholarship_status():
     
 @app.route('/scrape_scholarships', methods=['GET'])
 def scrape_scholarships():
-    url = 'https://www.ouinfo.ca/scholarships'  # The actual URL you want to scrape
+    url = 'https://www.ouinfo.ca/scholarships' 
     response = requests.get(url)
     
     if response.status_code != 200:

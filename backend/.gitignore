@@ -3,5 +3,7 @@
 /resumes
 /uploads
 .env
+/backend/
+/Scripts/
 
 *.js
